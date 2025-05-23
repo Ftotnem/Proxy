@@ -2,11 +2,12 @@ package proxy
 
 import (
 	"fmt"
-	"go.minekube.com/gate/pkg/edition/java/forge/modernforge"
-	"go.minekube.com/gate/pkg/edition/java/proto/state/states"
 	"net"
 	"strings"
 	"time"
+
+	"go.minekube.com/gate/pkg/edition/java/forge/modernforge"
+	"go.minekube.com/gate/pkg/edition/java/proto/state/states"
 
 	"github.com/go-logr/logr"
 	"github.com/robinbraemer/event"

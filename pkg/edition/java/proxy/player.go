@@ -46,6 +46,8 @@ import (
 	"go.minekube.com/gate/pkg/edition/java/proxy/player"
 	"go.minekube.com/gate/pkg/util/permission"
 	"go.minekube.com/gate/pkg/util/uuid"
+
+	"github.com/Ftotnem/Backend/go/shared/models"
 )
 
 // Player is a connected Minecraft player.
@@ -162,6 +164,9 @@ type connectedPlayer struct {
 
 	serversToTry []string // names of servers to try if we got disconnected from previous
 	tryIndex     int
+
+	LoadedProfile           *models.Player `json:"-" bson:"-"` // Stores the player's loaded/created profile
+	PlayerDataServiceClient *PlayerDataServiceClient
 }
 
 var _ Player = (*connectedPlayer)(nil)
@@ -185,21 +190,83 @@ func newConnectedPlayer(
 		MinecraftConn:      conn,
 		log: logr.FromContextOrDiscard(conn.Context()).WithName("player").WithValues(
 			"name", profile.Name, "id", profile.ID),
-		profile:            profile,
-		virtualHost:        virtualHost,
-		handshakeIntent:    handshakeIntent,
-		clientsideChannels: sets.NewCappedSet[string](maxClientsidePluginChannels),
-		onlineMode:         onlineMode,
-		connPhase:          conn.Type().InitialClientPhase(),
-		ping:               ping,
-		permFunc:           func(string) permission.TriState { return permission.Undefined },
-		playerKey:          playerKey,
+		profile:                 profile,
+		virtualHost:             virtualHost,
+		handshakeIntent:         handshakeIntent,
+		clientsideChannels:      sets.NewCappedSet[string](maxClientsidePluginChannels),
+		onlineMode:              onlineMode,
+		connPhase:               conn.Type().InitialClientPhase(),
+		ping:                    ping,
+		permFunc:                func(string) permission.TriState { return permission.Undefined },
+		playerKey:               playerKey,
+		PlayerDataServiceClient: NewPlayerDataServiceClient("http://localhost:8081"),
 	}
 	p.resourcePackHandler = resourcepack.NewHandler(p, p.eventMgr)
 	p.bundleHandler = &resourcepack.BundleDelimiterHandler{Player: p}
 	p.chatQueue = newChatQueue(p)
 	p.tabList = internaltablist.New(p)
 	return p
+}
+
+// LoadAndCreateProfile fetches the player's profile from the Player Data Service.
+// If the profile doesn't exist, it creates a new one.
+// It populates the p.LoadedProfile field.
+func (p *connectedPlayer) LoadAndCreateProfile(ctx context.Context) error {
+	playerUUID := p.profile.ID.String() // Get the player's UUID as a string
+
+	// Add a timeout for the API call to your player-data-service
+	// This context will be cancelled when this method returns, or if the parent context is cancelled.
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel() // Ensure the context is cancelled when the method exits
+
+	// 1. Attempt to get the player's profile from the Player Data Service
+	playerProfile, err := p.PlayerDataServiceClient.GetPlayer(ctxWithTimeout, playerUUID)
+
+	if err != nil {
+		// Check if the error indicates "player not found" (HTTP 404 from your service)
+		if strings.Contains(err.Error(), "not found") { // Check for "player %s not found" in error string
+			p.log.Info("Player profile not found, attempting to create new one.", "player_uuid", playerUUID)
+
+			// 2. Player not found, create a new models.Player struct with initial data
+			newPlayer := &models.Player{
+				UUID:                 playerUUID,
+				Username:             p.profile.Name,
+				Team:                 "default", // Default to empty/unassigned; Minestom will assign later
+				TotalPlayertimeTicks: 0.0,
+				Banned:               false,
+				BanExpiresAt:         nil,
+				ActiveBoosters:       []models.Booster{}, // Initialize as empty slice
+				LastLoginAt:          nil,                // PlayerDataService can set this on creation if desired
+			}
+			newPlayer.IsNewPlayer = true // Set this for runtime logic (won't be persisted)
+
+			// Call the CreatePlayer API
+			if createErr := p.PlayerDataServiceClient.CreatePlayer(ctxWithTimeout, newPlayer); createErr != nil {
+				p.log.Error(createErr, "Failed to create new player profile", "player_uuid", playerUUID)
+				// If creation fails, we might still want to proceed, but log the error.
+				// For a critical service, you might consider returning an error to disconnect the player.
+				return fmt.Errorf("failed to create new player profile for %s: %w", p.profile.Name, createErr)
+			} else {
+				p.log.Info("New player profile created successfully.", "player_uuid", playerUUID)
+				playerProfile = newPlayer // Use the newly created profile for the rest of the flow
+			}
+		} else {
+			// Handle other types of errors (e.g., network issues, player-data-service down)
+			p.log.Error(err, "Failed to retrieve player profile from Player Data Service", "player_uuid", playerUUID)
+			// This is a critical dependency. Consider returning an error to disconnect the player.
+			return fmt.Errorf("failed to retrieve player data for %s: %w", p.profile.Name, err)
+		}
+	} else {
+		p.log.Info("Player profile loaded successfully.", "player_uuid", playerUUID)
+	}
+
+	// 3. Populate the connectedPlayer's LoadedProfile field
+	// This makes the player's persistent data available throughout its session.
+	p.mu.Lock() // Protect access to p.LoadedProfile if accessed concurrently
+	p.LoadedProfile = playerProfile
+	p.mu.Unlock()
+
+	return nil // Successfully loaded or created profile
 }
 
 func (p *connectedPlayer) IdentifiedKey() crypto.IdentifiedKey { return p.playerKey }

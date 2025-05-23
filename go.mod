@@ -1,6 +1,6 @@
 module go.minekube.com/gate
 
-go 1.24.1
+go 1.24.2
 
 require (
 	connectrpc.com/connect v1.18.1
@@ -52,6 +52,7 @@ require (
 
 require (
 	buf.build/gen/go/minekube/connect/protocolbuffers/go v1.35.2-20240220124425-904ce30425c9.1 // indirect
+	github.com/Ftotnem/Backend/go/shared/models v0.0.0-20250523225419-26b8cd7112b4 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect

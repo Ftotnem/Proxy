@@ -87,9 +87,9 @@ config:
   # See the documentation for more information.
   forwarding:
     # Options: legacy, none, bungeeguard, velocity
-    mode: legacy
+    mode: velocity
     # The secret used if the mode is velocity.
-    #velocitySecret: secret_here
+    velocitySecret: balle123
     # The secret used if the mode is bungeeguard.
     #bungeeGuardSecret: secret_here
   # Proxy protocol (HA-Proxy) determines whether Gate should support proxy protocol for players.

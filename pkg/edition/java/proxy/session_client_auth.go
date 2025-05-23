@@ -98,6 +98,12 @@ func (a *authSessionHandler) Activated() {
 		return
 	}
 
+	if err := player.LoadAndCreateProfile(conn.Context()); err != nil {
+		a.log.Error(err, "Critical: Failed to load or create player profile on activation. Disconnecting player.", "player", player.profile.Name, "id", player.ID())
+		player.Disconnect(&component.Text{})
+		return // Stop processing if player data is essential and failed
+	}
+
 	a.log.Info("player has connected, completing login", "player", player, "id", player.ID())
 
 	// Setup permissions
