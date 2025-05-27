@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -47,7 +48,7 @@ import (
 	"go.minekube.com/gate/pkg/util/permission"
 	"go.minekube.com/gate/pkg/util/uuid"
 
-	"github.com/Ftotnem/Backend/go/shared/models"
+	gameservice "github.com/Ftotnem/Backend/go/shared/service"
 )
 
 // Player is a connected Minecraft player.
@@ -164,14 +165,15 @@ type connectedPlayer struct {
 
 	serversToTry []string // names of servers to try if we got disconnected from previous
 	tryIndex     int
-
-	LoadedProfile           *models.Player `json:"-" bson:"-"` // Stores the player's loaded/created profile
-	PlayerDataServiceClient *PlayerDataServiceClient
+	// Add the GameServiceClient here
+	gameServiceClient *gameservice.Client
 }
 
 var _ Player = (*connectedPlayer)(nil)
 
 const maxClientsidePluginChannels = 1024
+const gameServiceURIEnvVar = "GAME_SERVICE_URI"
+const defaultGameServiceURI = "http://localhost:8082" // Use http:// for clarity and default port
 
 func newConnectedPlayer(
 	conn netmc.MinecraftConn,
@@ -190,87 +192,64 @@ func newConnectedPlayer(
 		MinecraftConn:      conn,
 		log: logr.FromContextOrDiscard(conn.Context()).WithName("player").WithValues(
 			"name", profile.Name, "id", profile.ID),
-		profile:                 profile,
-		virtualHost:             virtualHost,
-		handshakeIntent:         handshakeIntent,
-		clientsideChannels:      sets.NewCappedSet[string](maxClientsidePluginChannels),
-		onlineMode:              onlineMode,
-		connPhase:               conn.Type().InitialClientPhase(),
-		ping:                    ping,
-		permFunc:                func(string) permission.TriState { return permission.Undefined },
-		playerKey:               playerKey,
-		PlayerDataServiceClient: NewPlayerDataServiceClient("http://localhost:8081"),
+		profile:            profile,
+		virtualHost:        virtualHost,
+		handshakeIntent:    handshakeIntent,
+		clientsideChannels: sets.NewCappedSet[string](maxClientsidePluginChannels),
+		onlineMode:         onlineMode,
+		connPhase:          conn.Type().InitialClientPhase(),
+		ping:               ping,
+		permFunc:           func(string) permission.TriState { return permission.Undefined },
+		playerKey:          playerKey,
 	}
 	p.resourcePackHandler = resourcepack.NewHandler(p, p.eventMgr)
 	p.bundleHandler = &resourcepack.BundleDelimiterHandler{Player: p}
 	p.chatQueue = newChatQueue(p)
 	p.tabList = internaltablist.New(p)
+
+	// Initialize the gameServiceClient using environment variable or default
+	gameServiceURL := os.Getenv(gameServiceURIEnvVar)
+	if gameServiceURL == "" {
+		gameServiceURL = defaultGameServiceURI
+		p.log.V(1).Info("Game Service URI environment variable not set, using default.", "envVar", gameServiceURIEnvVar, "default", defaultGameServiceURI)
+	} else {
+		p.log.V(1).Info("Game Service URI loaded from environment variable.", "envVar", gameServiceURIEnvVar, "url", gameServiceURL)
+	}
+
+	p.gameServiceClient = gameservice.NewClient(gameServiceURL)
+	p.log.V(1).Info("Game Service client initialized for player.", "baseURL", gameServiceURL)
+
 	return p
 }
 
-// LoadAndCreateProfile fetches the player's profile from the Player Data Service.
-// If the profile doesn't exist, it creates a new one.
-// It populates the p.LoadedProfile field.
-func (p *connectedPlayer) LoadAndCreateProfile(ctx context.Context) error {
-	playerUUID := p.profile.ID.String() // Get the player's UUID as a string
-
-	// Add a timeout for the API call to your player-data-service
-	// This context will be cancelled when this method returns, or if the parent context is cancelled.
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel() // Ensure the context is cancelled when the method exits
-
-	// 1. Attempt to get the player's profile from the Player Data Service
-	playerProfile, err := p.PlayerDataServiceClient.GetPlayer(ctxWithTimeout, playerUUID)
-
-	if err != nil {
-		// Check if the error indicates "player not found" (HTTP 404 from your service)
-		if strings.Contains(err.Error(), "not found") { // Check for "player %s not found" in error string
-			p.log.Info("Player profile not found, attempting to create new one.", "player_uuid", playerUUID)
-
-			// 2. Player not found, create a new models.Player struct with initial data
-			newPlayer := &models.Player{
-				UUID:                 playerUUID,
-				Username:             p.profile.Name,
-				Team:                 "default", // Default to empty/unassigned; Minestom will assign later
-				TotalPlayertimeTicks: 0.0,
-				Banned:               false,
-				BanExpiresAt:         nil,
-				ActiveBoosters:       []models.Booster{}, // Initialize as empty slice
-				LastLoginAt:          nil,                // PlayerDataService can set this on creation if desired
-			}
-			newPlayer.IsNewPlayer = true // Set this for runtime logic (won't be persisted)
-
-			// Call the CreatePlayer API
-			if createErr := p.PlayerDataServiceClient.CreatePlayer(ctxWithTimeout, newPlayer); createErr != nil {
-				p.log.Error(createErr, "Failed to create new player profile", "player_uuid", playerUUID)
-				// If creation fails, we might still want to proceed, but log the error.
-				// For a critical service, you might consider returning an error to disconnect the player.
-				return fmt.Errorf("failed to create new player profile for %s: %w", p.profile.Name, createErr)
-			} else {
-				p.log.Info("New player profile created successfully.", "player_uuid", playerUUID)
-				playerProfile = newPlayer // Use the newly created profile for the rest of the flow
-			}
-		} else {
-			// Handle other types of errors (e.g., network issues, player-data-service down)
-			p.log.Error(err, "Failed to retrieve player profile from Player Data Service", "player_uuid", playerUUID)
-			// This is a critical dependency. Consider returning an error to disconnect the player.
-			return fmt.Errorf("failed to retrieve player data for %s: %w", p.profile.Name, err)
-		}
-	} else {
-		p.log.Info("Player profile loaded successfully.", "player_uuid", playerUUID)
+// SendGameServiceOnline sends the player's online status to the Game Service.
+func (p *connectedPlayer) SendGameServiceOnline() {
+	if p.gameServiceClient == nil {
+		return // No client initialized, do nothing
 	}
 
-	// 3. Populate the connectedPlayer's LoadedProfile field
-	// This makes the player's persistent data available throughout its session.
-	p.mu.Lock() // Protect access to p.LoadedProfile if accessed concurrently
-	p.LoadedProfile = playerProfile
-	p.mu.Unlock()
+	go func() {
+		err := p.gameServiceClient.SendPlayerOnline(p.ID(), p.Username())
+		if err != nil {
+			p.log.Error(err, "Failed to send player online status to Game Service")
+		}
+	}()
+}
 
-	return nil // Successfully loaded or created profile
+// SendGameServiceOffline sends the player's offline status to the Game Service.
+func (p *connectedPlayer) SendGameServiceOffline() {
+	if p.gameServiceClient == nil {
+		return // No client initialized, do nothing
+	}
+	go func() {
+		err := p.gameServiceClient.SendPlayerOffline(p.ID(), p.Username())
+		if err != nil {
+			p.log.Error(err, "Failed to send player offline status to Game Service")
+		}
+	}()
 }
 
 func (p *connectedPlayer) IdentifiedKey() crypto.IdentifiedKey { return p.playerKey }
-
 func (p *connectedPlayer) connectionInFlight() *serverConnection {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -313,6 +292,11 @@ func (p *connectedPlayer) GameProfile() profile.GameProfile {
 }
 
 func (p *connectedPlayer) TabList() tablist.TabList { return p.tabList }
+
+// GameServiceClient returns the Game Service client for the player.
+func (p *connectedPlayer) GameServiceClient() *gameservice.Client {
+	return p.gameServiceClient
+}
 
 var (
 	ErrNoBackendConnection = errors.New("player has no backend server connection yet")
@@ -590,6 +574,7 @@ func (p *connectedPlayer) nextServerToTry(current RegisteredServer) RegisteredSe
 // player's connection is closed at this point,
 // now need to disconnect backend server connection, if any.
 func (p *connectedPlayer) teardown() {
+	p.SendGameServiceOffline()
 	p.mu.RLock()
 	connInFlight := p.connInFlight
 	connectedServer := p.connectedServer_

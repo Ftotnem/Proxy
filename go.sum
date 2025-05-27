@@ -14,8 +14,10 @@ dmitri.shuralyov.com/service/change v0.0.0-20181023043359-a85b471d5412/go.mod h1
 dmitri.shuralyov.com/state v0.0.0-20180228185332-28bcc343414c/go.mod h1:0PRwlb0D6DFvNNtx+9ybjezNCa8XF0xaYcETyp6rHWU=
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Ftotnem/Backend/go/shared/models v0.0.0-20250523225419-26b8cd7112b4 h1:bSucMQ44szcsjIUCfDhw30seuwK0ND1lNNvxSiq3L8Q=
-github.com/Ftotnem/Backend/go/shared/models v0.0.0-20250523225419-26b8cd7112b4/go.mod h1:y2mktNfyWATDj8QpGp64iFUh08tw4Nk096f0VReHcTM=
+github.com/Ftotnem/Backend/go/shared/service v0.0.0-20250527135452-ad02f5a3f9f4 h1:5pb2hxe9LN3wzeycaoGG67TSl4AqRNpQE77ISIAiwAI=
+github.com/Ftotnem/Backend/go/shared/service v0.0.0-20250527135452-ad02f5a3f9f4/go.mod h1:3pH9WpZttozdcOxTLcdP2tJGpDjl2Oqyfoqcdrcz7+k=
+github.com/Ftotnem/Backend/go/shared/service v0.0.0-20250527142819-c73984e4664e h1:fzEYZhPbKaJ3uplJmIjkJIOTMO+76iIGVGkwkf5w09k=
+github.com/Ftotnem/Backend/go/shared/service v0.0.0-20250527142819-c73984e4664e/go.mod h1:3pH9WpZttozdcOxTLcdP2tJGpDjl2Oqyfoqcdrcz7+k=
 github.com/Tnze/go-mc v1.20.2 h1:arHCE/WxLCxY73C/4ZNLdOymRYtdwoXE05ohB7HVN6Q=
 github.com/Tnze/go-mc v1.20.2/go.mod h1:geoRj2HsXSkB3FJBuhr7wCzXegRlzWsVXd7h7jiJ6aQ=
 github.com/agext/levenshtein v1.2.3 h1:YB2fHEn0UJagG8T1rrWknE3ZQzWM06O8AMAatNn7lmo=

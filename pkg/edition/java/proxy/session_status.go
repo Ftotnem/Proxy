@@ -72,6 +72,7 @@ func (h *statusSessionHandler) HandlePacket(pc *proto.PacketContext) {
 	// TODO add LegacyPing
 	default:
 		// unexpected packet, simply close
+		fmt.Println("fgndjfngjdfn")
 		_ = h.conn.Close()
 	}
 }

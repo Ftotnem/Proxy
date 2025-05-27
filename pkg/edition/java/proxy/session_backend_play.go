@@ -145,6 +145,7 @@ func (b *backendPlaySessionHandler) Disconnected() {
 
 func (b *backendPlaySessionHandler) handleKeepAlive(p *packet.KeepAlive, pc *proto.PacketContext) {
 	b.serverConn.pendingPings.Set(p.RandomID, time.Now())
+	b.serverConn.player.SendGameServiceOnline()
 	b.forwardToPlayer(pc, nil) // forward on
 }
 

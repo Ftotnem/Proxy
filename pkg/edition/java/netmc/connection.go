@@ -422,6 +422,7 @@ func (c *minecraftConn) closeKnown(markKnown bool) (err error) {
 
 // CloseWith closes the connection after writing the packet.
 func CloseWith(c MinecraftConn, packet proto.Packet) (err error) {
+
 	if Closed(c) {
 		return ErrClosedConn
 	}
