@@ -166,7 +166,7 @@ type connectedPlayer struct {
 	serversToTry []string // names of servers to try if we got disconnected from previous
 	tryIndex     int
 	// Add the GameServiceClient here
-	gameServiceClient *gameservice.Client
+	gameServiceClient *gameservice.GameServiceClient
 }
 
 var _ Player = (*connectedPlayer)(nil)
@@ -216,7 +216,7 @@ func newConnectedPlayer(
 		p.log.V(1).Info("Game Service URI loaded from environment variable.", "envVar", gameServiceURIEnvVar, "url", gameServiceURL)
 	}
 
-	p.gameServiceClient = gameservice.NewClient(gameServiceURL)
+	p.gameServiceClient = gameservice.NewGameClient(gameServiceURL)
 	p.log.V(1).Info("Game Service client initialized for player.", "baseURL", gameServiceURL)
 
 	return p
@@ -229,9 +229,12 @@ func (p *connectedPlayer) SendGameServiceOnline() {
 	}
 
 	go func() {
-		err := p.gameServiceClient.SendPlayerOnline(p.ID(), p.Username())
+		err := p.gameServiceClient.SendPlayerOnline(context.Background(), p.ID())
 		if err != nil {
 			p.log.Error(err, "Failed to send player online status to Game Service")
+			if isNetworkError(err) {
+				p.Disconnect(&component.Text{Content: "Game Service Down"})
+			}
 		}
 	}()
 }
@@ -242,11 +245,18 @@ func (p *connectedPlayer) SendGameServiceOffline() {
 		return // No client initialized, do nothing
 	}
 	go func() {
-		err := p.gameServiceClient.SendPlayerOffline(p.ID(), p.Username())
+		err := p.gameServiceClient.SendPlayerOffline(context.Background(), p.ID())
 		if err != nil {
 			p.log.Error(err, "Failed to send player offline status to Game Service")
+			if isNetworkError(err) {
+				p.Disconnect(&component.Text{Content: "Game Service Down"})
+			}
 		}
 	}()
+}
+func isNetworkError(err error) bool {
+	var netErr net.Error
+	return errors.As(err, &netErr) || strings.Contains(err.Error(), "connection refused")
 }
 
 func (p *connectedPlayer) IdentifiedKey() crypto.IdentifiedKey { return p.playerKey }
@@ -294,7 +304,7 @@ func (p *connectedPlayer) GameProfile() profile.GameProfile {
 func (p *connectedPlayer) TabList() tablist.TabList { return p.tabList }
 
 // GameServiceClient returns the Game Service client for the player.
-func (p *connectedPlayer) GameServiceClient() *gameservice.Client {
+func (p *connectedPlayer) GameServiceClient() *gameservice.GameServiceClient {
 	return p.gameServiceClient
 }
 

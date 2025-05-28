@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/otelconnect v0.7.2
-	github.com/Ftotnem/Backend/go/shared/service v0.0.0-20250527142819-c73984e4664e
+	github.com/Ftotnem/Backend/go/shared/service v0.0.0-20250527195226-42f7aebcb30b
 	github.com/Tnze/go-mc v1.20.2
 	github.com/agext/levenshtein v1.2.3
 	github.com/coder/websocket v1.8.12
@@ -53,6 +53,8 @@ require (
 
 require (
 	buf.build/gen/go/minekube/connect/protocolbuffers/go v1.35.2-20240220124425-904ce30425c9.1 // indirect
+	github.com/Ftotnem/Backend/go/shared/api v0.0.0-20250527195226-42f7aebcb30b // indirect
+	github.com/Ftotnem/Backend/go/shared/models v0.0.0-20250527195226-42f7aebcb30b // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
@@ -64,6 +66,7 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.23.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
