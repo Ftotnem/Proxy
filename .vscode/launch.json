@@ -26,7 +26,9 @@
         "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
         "OTEL_TRACES_ENABLED": "true",
         "OTEL_METRICS_ENABLED": "true",
-        "OTEL_SERVICE_NAME": "gate-dev"
+        "OTEL_SERVICE_NAME": "gate-dev",
+        "POD_IP": "192.168.1.100",
+        "SERVICE_PORT": "25566"
       }
     }
   ]

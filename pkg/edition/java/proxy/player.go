@@ -48,7 +48,7 @@ import (
 	"go.minekube.com/gate/pkg/util/permission"
 	"go.minekube.com/gate/pkg/util/uuid"
 
-	gameservice "github.com/Ftotnem/Backend/go/shared/service"
+	gameservice "github.com/Ftotnem/GO-SERVICES/shared/service"
 )
 
 // Player is a connected Minecraft player.
@@ -229,7 +229,24 @@ func (p *connectedPlayer) SendGameServiceOnline() {
 	}
 
 	go func() {
-		err := p.gameServiceClient.SendPlayerOnline(context.Background(), p.ID())
+		err := p.gameServiceClient.PlayerOnline(context.Background(), p.ID().String())
+		if err != nil {
+			p.log.Error(err, "Failed to send player online status to Game Service")
+			if isNetworkError(err) {
+				p.Disconnect(&component.Text{Content: "Game Service Down"})
+			}
+		}
+	}()
+}
+
+// SendGameServiceOnline sends the player's online status to the Game Service.
+func (p *connectedPlayer) SendGameServiceRefreshOnline() {
+	if p.gameServiceClient == nil {
+		return // No client initialized, do nothing
+	}
+
+	go func() {
+		err := p.gameServiceClient.RefreshPlayerOnlineStatus(context.Background(), p.ID().String())
 		if err != nil {
 			p.log.Error(err, "Failed to send player online status to Game Service")
 			if isNetworkError(err) {
@@ -245,7 +262,7 @@ func (p *connectedPlayer) SendGameServiceOffline() {
 		return // No client initialized, do nothing
 	}
 	go func() {
-		err := p.gameServiceClient.SendPlayerOffline(context.Background(), p.ID())
+		err := p.gameServiceClient.PlayerOffline(context.Background(), p.ID().String())
 		if err != nil {
 			p.log.Error(err, "Failed to send player offline status to Game Service")
 			if isNetworkError(err) {
@@ -549,35 +566,26 @@ func (p *connectedPlayer) SendPluginMessage(identifier message.ChannelIdentifier
 func (p *connectedPlayer) nextServerToTry(current RegisteredServer) RegisteredServer {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if len(p.serversToTry) == 0 {
-		p.serversToTry = p.config().ForcedHosts[p.virtualHost.String()]
-	}
-	if len(p.serversToTry) == 0 {
-		connOrder := p.config().Try
-		if len(connOrder) == 0 {
-			return nil
-		} else {
-			p.serversToTry = connOrder
-		}
+
+	// Get the list of servers dynamically instead of from config
+	servers := p.proxy.Servers()
+	if len(servers) == 0 {
+		fmt.Println("No servers available.")
+		return nil
 	}
 
-	sameName := func(rs RegisteredServer, name string) bool {
-		return rs.ServerInfo().Name() == name
-	}
-
-	for i := p.tryIndex; i < len(p.serversToTry); i++ {
-		toTry := p.serversToTry[i]
-		if (p.connectedServer_ != nil && sameName(p.connectedServer_.Server(), toTry)) ||
-			(p.connInFlight != nil && sameName(p.connInFlight.Server(), toTry)) ||
-			(current != nil && sameName(current, toTry)) {
+	// Iterate through dynamically registered servers
+	for _, server := range servers {
+		// Skip the current server or non-joinable servers
+		if current != nil && current.ServerInfo().Name() == server.ServerInfo().Name() {
 			continue
 		}
 
-		p.tryIndex = i
-		if s := p.proxy.Server(toTry); s != nil {
-			return s
-		}
+		// Select the first available joinable server
+		return server
 	}
+
+	// No more servers to try
 	return nil
 }
 

@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/otelconnect v0.7.2
-	github.com/Ftotnem/Backend/go/shared/service v0.0.0-20250527195226-42f7aebcb30b
+	github.com/Ftotnem/GO-SERVICES v0.0.0-20250531201221-b990cad71876
 	github.com/Tnze/go-mc v1.20.2
 	github.com/agext/levenshtein v1.2.3
 	github.com/coder/websocket v1.8.12
@@ -53,10 +53,10 @@ require (
 
 require (
 	buf.build/gen/go/minekube/connect/protocolbuffers/go v1.35.2-20240220124425-904ce30425c9.1 // indirect
-	github.com/Ftotnem/Backend/go/shared/api v0.0.0-20250527195226-42f7aebcb30b // indirect
-	github.com/Ftotnem/Backend/go/shared/models v0.0.0-20250527195226-42f7aebcb30b // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
@@ -74,6 +74,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
+	github.com/redis/go-redis/v9 v9.9.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.9.0 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
