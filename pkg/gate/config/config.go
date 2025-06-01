@@ -29,7 +29,7 @@ var DefaultConfig = Config{
 	},
 	Connect: connect.DefaultConfig,
 	API: API{
-		Enabled: false,
+		Enabled: true,
 		Config:  api.DefaultConfig,
 	},
 }

@@ -47,7 +47,7 @@ func main() {
 		podIP = "0.0.0.0"
 	}
 	cfg.ServiceIP = podIP
-	cfg.ServicePort = 25566
+	cfg.ServicePort = 25565
 
 	// 2. Create proxy service with configuration
 	proxy := &ProxyService{

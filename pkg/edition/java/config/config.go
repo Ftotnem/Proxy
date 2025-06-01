@@ -20,8 +20,8 @@ var DefaultConfig = Config{
 	Auth:                          Auth{},
 	OnlineModeKickExistingPlayers: false,
 	Forwarding: Forwarding{
-		Mode:           LegacyForwardingMode,
-		VelocitySecret: "",
+		Mode:           VelocityForwardingMode,
+		VelocitySecret: "balle123",
 	},
 	Status: Status{
 		ShowMaxPlayers: 1000,
