@@ -1,7 +1,7 @@
 # Gate proxy configuration for Minecraft Java Edition
 config:
   # The bind address to listen for Minecraft client connections.
-  bind: 0.0.0.0:25566
+  bind: 0.0.0.0:25565
   
   onlineMode: true
   
