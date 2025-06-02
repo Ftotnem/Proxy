@@ -146,7 +146,7 @@ func (p *ProxyService) tryConnectRedis(attempt int, isStartup bool) bool {
 	log.Printf("%s: Redis connection attempt %d...", logLevel, attempt)
 
 	// Try to connect
-	rdb, err := redisu.NewRedisClusterClient(p.cfg.RedisAddrs)
+	rdb, err := redisu.NewRedisClusterClient(p.cfg.RedisAddrs, p.cfg.RedisPassword)
 	if err != nil {
 		log.Printf("WARN: Redis connection failed (attempt %d): %v", attempt, err)
 		return false

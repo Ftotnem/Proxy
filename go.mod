@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/otelconnect v0.7.2
-	github.com/Ftotnem/GO-SERVICES v0.0.0-20250531201221-b990cad71876
+	github.com/Ftotnem/GO-SERVICES v0.0.0-20250602200706-8488007e747e
 	github.com/Tnze/go-mc v1.20.2
 	github.com/agext/levenshtein v1.2.3
 	github.com/coder/websocket v1.8.12

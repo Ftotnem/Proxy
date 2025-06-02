@@ -18,6 +18,8 @@ github.com/Ftotnem/GO-SERVICES v0.0.0-20250531193524-988ec8a18e0c h1:0n55wbvPR2C
 github.com/Ftotnem/GO-SERVICES v0.0.0-20250531193524-988ec8a18e0c/go.mod h1:SQ/SwntT49y/7mqGFMbhUc0arRK2o0NIWayPJs3qaqk=
 github.com/Ftotnem/GO-SERVICES v0.0.0-20250531201221-b990cad71876 h1:r3HPV2cK2u70aDo++E7CsLxX3ldRyTNT/jOPl6jxsKE=
 github.com/Ftotnem/GO-SERVICES v0.0.0-20250531201221-b990cad71876/go.mod h1:SQ/SwntT49y/7mqGFMbhUc0arRK2o0NIWayPJs3qaqk=
+github.com/Ftotnem/GO-SERVICES v0.0.0-20250602200706-8488007e747e h1:Rv1wH/HYtVzEqENWwG9YUlipJebcHGi5780xeb57HpI=
+github.com/Ftotnem/GO-SERVICES v0.0.0-20250602200706-8488007e747e/go.mod h1:SQ/SwntT49y/7mqGFMbhUc0arRK2o0NIWayPJs3qaqk=
 github.com/Tnze/go-mc v1.20.2 h1:arHCE/WxLCxY73C/4ZNLdOymRYtdwoXE05ohB7HVN6Q=
 github.com/Tnze/go-mc v1.20.2/go.mod h1:geoRj2HsXSkB3FJBuhr7wCzXegRlzWsVXd7h7jiJ6aQ=
 github.com/agext/levenshtein v1.2.3 h1:YB2fHEn0UJagG8T1rrWknE3ZQzWM06O8AMAatNn7lmo=
