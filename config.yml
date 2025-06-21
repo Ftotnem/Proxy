@@ -9,12 +9,6 @@ config:
   
   try:
   
-  status:
-    
-    motd: |
-      §bA Gate Proxy
-      §bVisit ➞ §fgithub.com/minekube/gate
-  
   acceptTransfers: true
  
   bungeePluginChannelEnabled: true

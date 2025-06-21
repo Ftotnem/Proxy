@@ -40,6 +40,7 @@ func main() {
 		log.Printf("ERROR: Failed to load config: %v", err)
 		return
 	}
+	cfg.RedisAddrs = []string{"0.0.0.0:7000", "0.0.0.0:7001", "0.0.0.0:7002", "0.0.0.0:7003", "0.0.0.0:7004", "0.0.0.0:7005"} // Default for K8s Service
 
 	// Set up pod IP and service port
 	podIP := os.Getenv("POD_IP")
